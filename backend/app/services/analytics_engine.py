@@ -65,15 +65,20 @@ def calculate_wape(forecasts: List[float], actuals: List[float]) -> Optional[flo
     return float((sum_abs_err / sum_actual) * 100.0)
 
 
-def calculate_correlation(forecasts: List[float], actuals: List[float]) -> Optional[float]:
-    """Calculate Pearson correlation coefficient R^2."""
+def calculate_squared_pearson(forecasts: List[float], actuals: List[float]) -> Optional[float]:
+    """Calculate squared Pearson correlation coefficient (r^2) in [0, 1].
+    
+    Measures the strength of linear association (co-movement) between forecast and actuals.
+    Note: r^2 does NOT penalize constant additive bias or scale miscalibration.
+    Returns None if sample size < 2 or variance of either series is zero.
+    """
     if not forecasts or not actuals or len(forecasts) != len(actuals) or len(forecasts) < 2:
         return None
     f_arr = np.array(forecasts, dtype=float)
     a_arr = np.array(actuals, dtype=float)
     
-    std_f = np.std(f_arr)
-    std_a = np.std(a_arr)
+    std_f = float(np.std(f_arr))
+    std_a = float(np.std(a_arr))
     if std_f == 0.0 or std_a == 0.0:
         return None
     
@@ -81,7 +86,45 @@ def calculate_correlation(forecasts: List[float], actuals: List[float]) -> Optio
     r = corr_matrix[0, 1]
     if math.isnan(r):
         return None
-    return float(max(0.0, r ** 2))
+    return float(max(0.0, min(1.0, r ** 2)))
+
+
+def calculate_predictive_r2(forecasts: List[float], actuals: List[float]) -> Optional[float]:
+    """Calculate standard predictive coefficient of determination (R^2_pred).
+    
+    Formula: 1 - (SS_res / SS_tot) = 1 - (sum((A_i - F_i)^2) / sum((A_i - mean(A))^2))
+    
+    Interpretation:
+    - Measures skill relative to the naive benchmark of predicting the climatological mean actual.
+    - Can be negative if the forecast is worse than predicting the mean actual.
+    - Directly penalizes systematic bias and scale errors, unlike Pearson r^2.
+    
+    Edge cases:
+    - If sample size < 2: returns None.
+    - If SS_tot == 0 (constant actual): returns 1.0 if SS_res == 0, else None.
+    """
+    if not forecasts or not actuals or len(forecasts) != len(actuals) or len(forecasts) < 2:
+        return None
+    
+    f_arr = np.array(forecasts, dtype=float)
+    a_arr = np.array(actuals, dtype=float)
+    
+    mean_a = float(np.mean(a_arr))
+    ss_tot = float(np.sum((a_arr - mean_a) ** 2))
+    ss_res = float(np.sum((a_arr - f_arr) ** 2))
+    
+    if ss_tot == 0.0:
+        if ss_res == 0.0:
+            return 1.0
+        return None
+        
+    r2 = 1.0 - (ss_res / ss_tot)
+    return float(r2)
+
+
+def calculate_correlation(forecasts: List[float], actuals: List[float]) -> Optional[float]:
+    """Legacy alias: returns squared Pearson correlation coefficient r^2."""
+    return calculate_squared_pearson(forecasts, actuals)
 
 
 def calculate_empirical_quantiles(errors: List[float]) -> Dict[str, float]:

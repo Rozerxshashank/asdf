@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import {
   ResponsiveContainer,
-  AreaChart,
-  Area,
   LineChart,
   Line,
   BarChart,
@@ -15,7 +13,7 @@ import {
   ReferenceLine
 } from 'recharts';
 import { SettlementPoint } from '../../types/api';
-import { Info, Layers } from 'lucide-react';
+import { Layers, Activity } from 'lucide-react';
 
 interface DecisionDeskChartProps {
   intervals: SettlementPoint[];
@@ -36,6 +34,7 @@ export const DecisionDeskChart: React.FC<DecisionDeskChartProps> = ({
       period: i.settlementPeriod,
       time: timeLabel,
       fullStartTime: i.startTime,
+      fullEndTime: i.endTime,
       forecast: i.forecastGeneration,
       actual: i.actualGeneration,
       error: i.forecastError,
@@ -44,37 +43,37 @@ export const DecisionDeskChart: React.FC<DecisionDeskChartProps> = ({
     };
   });
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       const isOver = (data.error ?? 0) > 0;
       return (
-        <div className="bg-slate-900 border border-slate-700 p-3 rounded-lg shadow-xl text-xs space-y-1.5 min-w-[210px]">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-1 font-semibold">
-            <span className="text-white">SP {data.period} &bull; {data.time} UTC</span>
-            <span className={`px-1.5 py-0.2 rounded text-[10px] ${
-              data.isAvailable ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/60' : 'bg-rose-950 text-rose-400'
+        <div className="bg-[#0b1324] border border-slate-700 p-3 rounded-lg shadow-xl text-xs space-y-1.5 min-w-[220px]">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-1 font-semibold text-slate-100">
+            <span>SP {data.period} &bull; {data.time} UTC</span>
+            <span className={`px-1.5 py-0.2 rounded text-[10px] font-mono ${
+              data.isAvailable ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60' : 'bg-rose-950/80 text-rose-400'
             }`}>
               {data.isAvailable ? 'Valid Vintage' : 'No Vintage'}
             </span>
           </div>
 
-          <div className="flex items-center justify-between">
-            <span className="text-blue-400 font-medium">Forecast (Cutoff):</span>
-            <span className="font-mono text-white font-semibold">
-              {data.forecast !== null ? `${data.forecast.toLocaleString('en-GB')} MW` : '—'}
+          <div className="flex items-center justify-between pt-0.5">
+            <span className="text-sky-400 font-medium">Day-Ahead Forecast:</span>
+            <span className="font-mono text-slate-100 font-semibold">
+              {data.forecast !== null ? `${Math.round(data.forecast).toLocaleString('en-GB')} MW` : 'Missing'}
             </span>
           </div>
 
           <div className="flex items-center justify-between">
             <span className="text-emerald-400 font-medium">Actual Outturn:</span>
-            <span className="font-mono text-white font-semibold">
-              {data.actual !== null ? `${data.actual.toLocaleString('en-GB')} MW` : '—'}
+            <span className="font-mono text-slate-100 font-semibold">
+              {data.actual !== null ? `${Math.round(data.actual).toLocaleString('en-GB')} MW` : 'Missing'}
             </span>
           </div>
 
           {data.error !== null && (
-            <div className="flex items-center justify-between border-t border-slate-800 pt-1">
+            <div className="flex items-center justify-between border-t border-slate-800/80 pt-1">
               <span className="text-slate-400 font-medium">Forecast Error (F − A):</span>
               <span className={`font-mono font-bold ${
                 isOver ? 'text-amber-400' : 'text-cyan-400'
@@ -85,8 +84,8 @@ export const DecisionDeskChart: React.FC<DecisionDeskChartProps> = ({
           )}
 
           {data.publishTime && (
-            <div className="text-[10px] text-slate-400 pt-0.5 border-t border-slate-800/40">
-              Published: {new Date(data.publishTime).toUTCString().replace('GMT', 'UTC').substring(17, 22)} UTC
+            <div className="text-[10px] text-slate-400 pt-1 border-t border-slate-800/60 font-mono">
+              Vintage Published: {data.publishTime.replace('T', ' ').replace('Z', ' UTC')}
             </div>
           )}
         </div>
@@ -96,25 +95,25 @@ export const DecisionDeskChart: React.FC<DecisionDeskChartProps> = ({
   };
 
   return (
-    <div className="bg-slate-900/90 border border-slate-800 p-4 rounded-xl space-y-3">
-      {/* Chart Header & Mode Toggle */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+    <div className="bg-[#111827]/90 border border-slate-800 p-4 rounded-lg space-y-3">
+      {/* Header and View Toggle */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
         <div>
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
-            <span>Half-Hourly Generation Profile (30-Minute Resolution)</span>
-            <span className="text-xs text-slate-400 font-normal">| 48 Settlement Periods</span>
-          </h3>
-          <p className="text-xs text-slate-400">
-            Comparing selected Day-Ahead forecast against actual outturn generation across Day D.
+          <h2 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
+            <span>Half-Hourly Wind Generation Profile</span>
+            <span className="text-xs text-slate-400 font-normal">| 48 Settlement Periods (Day D)</span>
+          </h2>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Evaluates the selected Day-Ahead forecast available at the procurement cutoff against actual outturn.
           </p>
         </div>
 
-        <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs self-start sm:self-auto">
+        <div className="flex items-center gap-1 bg-[#0b1324] p-1 rounded-md border border-slate-800 text-xs self-start sm:self-auto">
           <button
             onClick={() => setViewMode('generation')}
-            className={`px-3 py-1 rounded transition-colors ${
+            className={`px-3 py-1 rounded text-xs transition-colors ${
               viewMode === 'generation'
-                ? 'bg-blue-600 text-white font-semibold'
+                ? 'bg-blue-600 text-white font-medium shadow-sm'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -122,9 +121,9 @@ export const DecisionDeskChart: React.FC<DecisionDeskChartProps> = ({
           </button>
           <button
             onClick={() => setViewMode('error')}
-            className={`px-3 py-1 rounded transition-colors ${
+            className={`px-3 py-1 rounded text-xs transition-colors ${
               viewMode === 'error'
-                ? 'bg-blue-600 text-white font-semibold'
+                ? 'bg-blue-600 text-white font-medium shadow-sm'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
@@ -133,80 +132,77 @@ export const DecisionDeskChart: React.FC<DecisionDeskChartProps> = ({
         </div>
       </div>
 
-      {/* Chart Container */}
-      <div className="h-80 w-full pt-2">
+      {/* Main Centerpiece Chart (Increased Usable Height) */}
+      <div className="h-[460px] w-full pt-2">
         <ResponsiveContainer width="100%" height="100%">
           {viewMode === 'generation' ? (
-            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="forecastGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4} />
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.0} />
-                </linearGradient>
-                <linearGradient id="actualGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+            <LineChart data={chartData} margin={{ top: 12, right: 16, left: 4, bottom: 8 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
               <XAxis
                 dataKey="time"
                 stroke="#64748b"
                 tick={{ fill: '#94a3b8', fontSize: 11 }}
                 interval={3}
+                tickLine={{ stroke: '#334155' }}
               />
               <YAxis
                 stroke="#64748b"
                 tick={{ fill: '#94a3b8', fontSize: 11 }}
                 tickFormatter={(val) => `${(val / 1000).toFixed(0)}k`}
                 unit=" MW"
+                domain={['auto', 'auto']}
+                tickLine={{ stroke: '#334155' }}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend
                 verticalAlign="top"
                 align="right"
-                wrapperStyle={{ paddingBottom: '10px', fontSize: '12px' }}
+                wrapperStyle={{ paddingBottom: '12px', fontSize: '12px' }}
               />
-              <Area
+              <Line
                 type="monotone"
                 dataKey="forecast"
-                name="Forecast at Cutoff (MW)"
-                stroke="#3b82f6"
+                name="Day-Ahead Forecast at Cutoff (MW)"
+                stroke="#38bdf8"
                 strokeWidth={2.5}
-                fillOpacity={1}
-                fill="url(#forecastGrad)"
+                dot={false}
+                activeDot={{ r: 4, fill: '#38bdf8' }}
+                connectNulls={false}
               />
               <Line
                 type="monotone"
                 dataKey="actual"
                 name="Actual Wind Outturn (MW)"
-                stroke="#10b981"
-                strokeWidth={2}
+                stroke="#34d399"
+                strokeWidth={2.2}
                 dot={false}
+                activeDot={{ r: 4, fill: '#34d399' }}
+                connectNulls={false}
               />
-            </AreaChart>
+            </LineChart>
           ) : (
-            <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+            <BarChart data={chartData} margin={{ top: 12, right: 16, left: 4, bottom: 8 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
               <XAxis
                 dataKey="time"
                 stroke="#64748b"
                 tick={{ fill: '#94a3b8', fontSize: 11 }}
                 interval={3}
+                tickLine={{ stroke: '#334155' }}
               />
               <YAxis
                 stroke="#64748b"
                 tick={{ fill: '#94a3b8', fontSize: 11 }}
                 unit=" MW"
+                tickLine={{ stroke: '#334155' }}
               />
               <Tooltip content={<CustomTooltip />} />
               <ReferenceLine y={0} stroke="#475569" strokeWidth={1.5} />
               <Bar
                 dataKey="error"
                 name="Forecast Error (F − A) MW"
-                fill="#f59e0b"
                 shape={(props: any) => {
-                  const { fill, x, y, width, height } = props;
+                  const { x, y, width, height } = props;
                   const isPositive = props.payload.error >= 0;
                   return (
                     <rect
@@ -214,8 +210,8 @@ export const DecisionDeskChart: React.FC<DecisionDeskChartProps> = ({
                       y={y}
                       width={width}
                       height={height}
-                      fill={isPositive ? '#f59e0b' : '#06b6d4'}
-                      rx={2}
+                      fill={isPositive ? '#fbbf24' : '#22d3ee'}
+                      rx={1.5}
                     />
                   );
                 }}
@@ -225,30 +221,33 @@ export const DecisionDeskChart: React.FC<DecisionDeskChartProps> = ({
         </ResponsiveContainer>
       </div>
 
-      <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800/80">
-        <div className="flex items-center gap-4">
+      {/* Clean Bottom Legend / Footer */}
+      <div className="flex flex-wrap items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800/80">
+        <div className="flex flex-wrap items-center gap-4">
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-            Forecast at Cutoff
+            <span className="w-2.5 h-0.5 bg-sky-400 inline-block"></span>
+            <span className="text-slate-300">Selected Forecast (WINDFOR)</span>
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-            Actual Generation
+            <span className="w-2.5 h-0.5 bg-emerald-400 inline-block"></span>
+            <span className="text-slate-300">Actual Outturn (FUELHH)</span>
           </span>
           {viewMode === 'error' && (
             <>
               <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-sm bg-amber-500"></span>
-                Overforecast (Downside Short Risk)
+                <span className="w-2.5 h-2.5 rounded-sm bg-amber-400 inline-block"></span>
+                <span>Over-forecast (Short Imbalance Risk)</span>
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-sm bg-cyan-500"></span>
-                Underforecast (Spill/Long Risk)
+                <span className="w-2.5 h-2.5 rounded-sm bg-cyan-400 inline-block"></span>
+                <span>Under-forecast (Long Imbalance Risk)</span>
               </span>
             </>
           )}
         </div>
-        <span className="font-mono text-slate-400">All intervals UTC</span>
+        <span className="font-mono text-slate-400 text-[11px]">
+          Timezone: UTC &bull; 30-min settlement intervals
+        </span>
       </div>
     </div>
   );

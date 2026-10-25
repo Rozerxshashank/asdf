@@ -107,7 +107,9 @@ class OverallMetrics(BaseModel):
     rmseMW: float
     meanBiasMW: float
     wapePercent: Optional[float]
-    correlationR2: Optional[float]
+    squaredPearsonR2: Optional[float] = Field(None, description="Squared Pearson correlation coefficient (r^2) in [0, 1]")
+    predictiveR2: Optional[float] = Field(None, description="Standard predictive coefficient of determination (1 - SS_res/SS_tot)")
+    correlationR2: Optional[float] = Field(None, description="Legacy alias for squared Pearson correlation")
     p10ErrorMW: float
     p50ErrorMW: float
     p90ErrorMW: float
@@ -130,17 +132,25 @@ class ForecastVintageRecord(BaseModel):
     startTime: str
     generation: float
     leadTimeHours: float
+    isAvailableAtCutoff: bool = Field(True, description="Whether vintage was published prior to decision cutoff")
+    vintageCategory: str = Field("PRE_CUTOFF_DECISION", description="'PRE_CUTOFF_DECISION' or 'POST_CUTOFF_REVISION'")
 
 
 class DeliveryPeriodEvolution(BaseModel):
     settlementPeriod: int
     startTime: str
     actualMW: Optional[float]
+    decisionForecastMW: Optional[float] = Field(None, description="Forecast selected at decision cutoff")
+    decisionPublishTime: Optional[str] = Field(None, description="Publication timestamp of decision forecast")
+    postCutoffRevisionCount: int = Field(0, description="Count of subsequent revisions published after cutoff")
     vintages: List[Dict[str, Any]]
 
 
 class ForecastEvolutionResponse(BaseModel):
     deliveryDate: str
+    cutoffRule: Optional[str] = Field(None, description="Applied procurement cutoff rule")
+    cutoffTime: Optional[str] = Field(None, description="Resolved cutoff timestamp (UTC)")
+    cutoffDescription: Optional[str] = Field(None, description="Cutoff description")
     totalVintagesFound: int
     deliveryPeriodEvolution: List[DeliveryPeriodEvolution]
     evolutionNotice: str

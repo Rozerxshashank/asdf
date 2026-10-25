@@ -108,3 +108,44 @@ def test_procurement_interval_calculation():
     assert calc["netResidualActualMW"] == 16000.0
     # Residual delta: 14000 - 16000 = -2000.0 MW (deficit under-procured)
     assert calc["residualDeltaMW"] == -2000.0
+
+
+def test_squared_pearson_vs_predictive_r2():
+    """Verify distinction between squared Pearson correlation (r^2) and predictive R^2."""
+    actuals = [1000.0, 2000.0, 3000.0, 4000.0]
+    
+    # Case A: Perfect forecast (F == A)
+    perfect_fc = [1000.0, 2000.0, 3000.0, 4000.0]
+    assert analytics_engine.calculate_squared_pearson(perfect_fc, actuals) == 1.0
+    assert analytics_engine.calculate_predictive_r2(perfect_fc, actuals) == 1.0
+
+    # Case B: Biased forecast with perfect shape (F = A + 2000)
+    # Pearson r^2 is 1.0 (perfect correlation / shape match)
+    # But predictive R^2 is heavily penalized by systematic bias!
+    biased_fc = [3000.0, 4000.0, 5000.0, 6000.0]
+    sq_pearson = analytics_engine.calculate_squared_pearson(biased_fc, actuals)
+    pred_r2 = analytics_engine.calculate_predictive_r2(biased_fc, actuals)
+    
+    assert round(sq_pearson, 4) == 1.0
+    assert pred_r2 < 0.0, "Predictive R^2 must penalize large systematic bias and can be negative"
+
+    # Case C: Forecast equal to mean of actuals (naive climatology benchmark)
+    # By definition, SS_res == SS_tot, so predictive R^2 == 0.0
+    mean_a = sum(actuals) / len(actuals)
+    climatology_fc = [mean_a] * len(actuals)
+    # Zero variance in forecast -> Pearson is None
+    assert analytics_engine.calculate_squared_pearson(climatology_fc, actuals) is None
+    # Predictive R^2 is exactly 0.0
+    assert analytics_engine.calculate_predictive_r2(climatology_fc, actuals) == 0.0
+
+
+def test_predictive_r2_edge_cases():
+    """Verify edge cases for predictive R^2 calculation."""
+    # Fewer than 2 samples
+    assert analytics_engine.calculate_predictive_r2([100.0], [100.0]) is None
+    
+    # Constant actual series with perfect forecast
+    assert analytics_engine.calculate_predictive_r2([500.0, 500.0], [500.0, 500.0]) == 1.0
+    
+    # Constant actual series with imperfect forecast
+    assert analytics_engine.calculate_predictive_r2([600.0, 600.0], [500.0, 500.0]) is None

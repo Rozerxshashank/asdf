@@ -20,6 +20,11 @@ async def get_accuracy_hub(
     )
 ):
     """Calculate comprehensive forecast accuracy metrics across the full January 2026 dataset."""
+    try:
+        _, cutoff_desc = data_service.resolve_decision_cutoff("2026-01-15", cutoff_rule)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid cutoff parameter: {str(e)}")
+
     all_records = data_service.get_all_matched_records(cutoff_rule=cutoff_rule)
     total_expected = 31 * 48  # 1488 intervals in January
 
@@ -42,7 +47,8 @@ async def get_accuracy_hub(
     rmse = analytics_engine.calculate_rmse(forecasts, actuals) or 0.0
     bias = analytics_engine.calculate_bias(forecasts, actuals) or 0.0
     wape = analytics_engine.calculate_wape(forecasts, actuals)
-    r2 = analytics_engine.calculate_correlation(forecasts, actuals)
+    sq_pearson = analytics_engine.calculate_squared_pearson(forecasts, actuals)
+    pred_r2 = analytics_engine.calculate_predictive_r2(forecasts, actuals)
     quantiles = analytics_engine.calculate_empirical_quantiles(errors)
 
     overall = OverallMetrics(
@@ -54,7 +60,9 @@ async def get_accuracy_hub(
         rmseMW=round(rmse, 1),
         meanBiasMW=round(bias, 1),
         wapePercent=round(wape, 2) if wape is not None else None,
-        correlationR2=round(r2, 3) if r2 is not None else None,
+        squaredPearsonR2=round(sq_pearson, 3) if sq_pearson is not None else None,
+        predictiveR2=round(pred_r2, 3) if pred_r2 is not None else None,
+        correlationR2=round(sq_pearson, 3) if sq_pearson is not None else None,
         p10ErrorMW=round(quantiles["p10"], 1),
         p50ErrorMW=round(quantiles["p50"], 1),
         p90ErrorMW=round(quantiles["p90"], 1)

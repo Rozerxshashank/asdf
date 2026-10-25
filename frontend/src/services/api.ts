@@ -67,10 +67,12 @@ export async function fetchAccuracy(
 
 export async function fetchForecastEvolution(
   deliveryDate: string = '2026-01-15',
+  cutoffRule: string = 'DA_AUCTION_1100',
   periods: string = '16,24,36,44'
 ): Promise<ForecastEvolutionResponse> {
   const params = new URLSearchParams({
     delivery_date: deliveryDate,
+    cutoff_rule: cutoffRule,
     periods: periods
   });
   const res = await fetch(`${BASE_URL}/api/forecast-evolution?${params.toString()}`);

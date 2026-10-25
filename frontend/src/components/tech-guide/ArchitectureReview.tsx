@@ -6,227 +6,255 @@ import {
   Database,
   CheckCircle2,
   ShieldCheck,
-  Code,
   Terminal,
   Activity,
-  Cpu
+  Cpu,
+  Table,
+  AlertTriangle
 } from 'lucide-react';
 
 export const ArchitectureReview: React.FC = () => {
   return (
-    <div className="space-y-6">
-      {/* Intro Banner */}
-      <div className="bg-slate-900/90 border border-slate-800 p-5 rounded-xl space-y-2">
-        <div className="flex items-center gap-2 text-cyan-400 font-bold text-sm uppercase tracking-wider">
-          <FileCode2 className="w-5 h-5" />
-          <span>Internal Technical Lead Architecture & Design Review</span>
+    <div className="max-w-5xl mx-auto space-y-8 py-4 text-slate-200">
+      {/* Header / Title */}
+      <div className="border-b border-slate-800 pb-5 space-y-2">
+        <div className="flex items-center gap-2 text-blue-400 text-xs font-mono font-medium uppercase tracking-wider">
+          <FileCode2 className="w-4 h-4" />
+          <span>Internal Technical Lead Review &bull; Architecture Specification</span>
         </div>
-        <p className="text-xs text-slate-300 leading-relaxed max-w-4xl">
-          This portal provides a comprehensive architectural breakdown of the WindLens platform for technical evaluation.
-          It covers system separation of concerns, data ingestion resilience, anti-lookahead forecast selection logic,
-          mathematical formulations, and testing practices.
+        <h1 className="text-2xl font-bold tracking-tight text-white">
+          WindLens System Architecture & Data Methodology
+        </h1>
+        <p className="text-sm text-slate-400 leading-relaxed max-w-3xl">
+          Complete technical documentation of the WindLens Day-Ahead wind power decision platform.
+          Covers system separation of concerns, Elexon BMRS ingestion constraints, anti-lookahead forecast selection logic,
+          hourly-to-half-hourly block alignment, mathematical error formulations, and verified empirical benchmarks.
         </p>
       </div>
 
-      {/* Grid: 3 Major Pillars */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Pillar 1: Frontend Architecture */}
-        <div className="bg-slate-900/90 border border-slate-800 p-4 rounded-xl space-y-3">
-          <div className="flex items-center gap-2 text-blue-400 font-bold text-xs uppercase tracking-wider">
-            <Layers className="w-4 h-4" />
-            <span>Frontend Tier (React + Vite)</span>
+      {/* Section 1: System Architecture Overview */}
+      <section className="space-y-4">
+        <h2 className="text-base font-semibold text-white flex items-center gap-2 border-b border-slate-800/80 pb-2">
+          <Server className="w-4 h-4 text-blue-400" />
+          <span>1. System Architecture & Separation of Concerns</span>
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <div className="bg-[#111827]/90 border border-slate-800 p-4 rounded-lg space-y-2.5">
+            <div className="font-semibold text-blue-400 flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5" />
+              <span>Frontend Tier</span>
+            </div>
+            <p className="text-slate-400 leading-relaxed">
+              Built with React 19, TypeScript, Vite, and Tailwind CSS. Provides a restrained, high-density financial analytics interface.
+              All components consume strongly typed interfaces mirroring backend Pydantic models. Visualization uses Recharts vector canvases with explicit zero-lines, custom tooltips, and accessible contrasting strokes.
+            </p>
           </div>
-          <ul className="text-xs text-slate-300 space-y-2">
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-              <span><strong>TypeScript & React 19:</strong> Strict typing matching backend Pydantic schemas.</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-              <span><strong>Tailwind CSS v4:</strong> Enterprise dark theme tailored for trading desk ergonomics.</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-              <span><strong>Recharts:</strong> High-performance vector charts for 48-period settlement curves.</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-              <span><strong>Decoupled API Client:</strong> Resilient fetch client with typed error propagation.</span>
-            </li>
-          </ul>
-        </div>
 
-        {/* Pillar 2: Backend Architecture */}
-        <div className="bg-slate-900/90 border border-slate-800 p-4 rounded-xl space-y-3">
-          <div className="flex items-center gap-2 text-cyan-400 font-bold text-xs uppercase tracking-wider">
-            <Server className="w-4 h-4" />
-            <span>Backend Tier (FastAPI + Python)</span>
+          <div className="bg-[#111827]/90 border border-slate-800 p-4 rounded-lg space-y-2.5">
+            <div className="font-semibold text-cyan-400 flex items-center gap-1.5">
+              <Cpu className="w-3.5 h-3.5" />
+              <span>Backend Tier</span>
+            </div>
+            <p className="text-slate-400 leading-relaxed">
+              FastAPI ASGI service in Python 3.11+. Pure analytics engine (<code className="text-cyan-300">analytics_engine.py</code>) is completely decoupled from HTTP transport.
+              Modular routers handle Day-Ahead forecasts, accuracy metrics, vintage evolution, and scenario balance simulations.
+              Global exception handlers prevent stack trace leakage.
+            </p>
           </div>
-          <ul className="text-xs text-slate-300 space-y-2">
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-              <span><strong>FastAPI Framework:</strong> Asynchronous ASGI service with automatic OpenAPI documentation.</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-              <span><strong>Pure Analytics Engine:</strong> Stateless mathematical functions (<code className="text-cyan-300">analytics_engine.py</code>).</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-              <span><strong>Modular Routers:</strong> Strict domain separation for forecast, accuracy, evolution, and scenario.</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-              <span><strong>Exception Safeguard:</strong> Global exception handler prevents internal stack trace leakage.</span>
-            </li>
-          </ul>
-        </div>
 
-        {/* Pillar 3: Data Tier */}
-        <div className="bg-slate-900/90 border border-slate-800 p-4 rounded-xl space-y-3">
-          <div className="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
-            <Database className="w-4 h-4" />
-            <span>Data Ingestion & Integrity</span>
+          <div className="bg-[#111827]/90 border border-slate-800 p-4 rounded-lg space-y-2.5">
+            <div className="font-semibold text-emerald-400 flex items-center gap-1.5">
+              <Database className="w-3.5 h-3.5" />
+              <span>Data & Caching Tier</span>
+            </div>
+            <p className="text-slate-400 leading-relaxed">
+              In-memory indexing by standardized ISO-8601 UTC timestamps with sub-millisecond lookup latency.
+              Packaged with 1,488 verified actual outturn intervals (Elexon <code className="text-emerald-300">FUELHH</code>) and 19,856 forecast vintages (<code className="text-emerald-300">WINDFOR</code>) covering the full January 2026 delivery window.
+            </p>
           </div>
-          <ul className="text-xs text-slate-300 space-y-2">
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-              <span><strong>Elexon BMRS API:</strong> Direct streams (<code className="text-cyan-300">FUELHH</code> and <code className="text-cyan-300">WINDFOR</code>).</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-              <span><strong>7-Day Query Chunking:</strong> Handles Elexon's strict 7-day API date range constraint.</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-              <span><strong>Packaged Local Cache:</strong> 1,488 verified actuals & 19,856 forecast vintages ready out of the box.</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
-              <span><strong>Resilient Fallback:</strong> Seamless fallback to validated cache during upstream network outages.</span>
-            </li>
-          </ul>
         </div>
-      </div>
+      </section>
 
-      {/* Deep-Dive Section 1: Forecast Selection & Anti-Lookahead Rule */}
-      <div className="bg-slate-900/90 border border-slate-800 p-5 rounded-xl space-y-3">
-        <h3 className="text-sm font-bold text-white flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-emerald-400" />
-          <span>Anti-Lookahead Decision Gate Logic</span>
-        </h3>
-        <p className="text-xs text-slate-300 leading-relaxed">
-          In wholesale trading evaluation, using the latest available forecast at time of evaluation introduces fatal <strong>look-ahead bias</strong>.
-          WindLens implements a formal filter:
-        </p>
-
-        <div className="bg-slate-950 p-4 rounded-lg font-mono text-xs text-cyan-300 border border-slate-800 space-y-1 overflow-x-auto">
-          <div><span className="text-slate-500"># For delivery interval startTime S and procurement cutoff T_cutoff:</span></div>
-          <div><span className="text-purple-400">V_valid</span> = [vintage <span className="text-purple-400">for</span> vintage <span className="text-purple-400">in</span> V(S) <span className="text-purple-400">if</span> vintage.publishTime &le; T_cutoff]</div>
-          <div><span className="text-purple-400">if</span> V_valid:</div>
-          <div>&nbsp;&nbsp;&nbsp;&nbsp;selected_forecast = max(V_valid, key=<span className="text-purple-400">lambda</span> v: v.publishTime)</div>
-          <div><span className="text-purple-400">else</span>:</div>
-          <div>&nbsp;&nbsp;&nbsp;&nbsp;selected_forecast = <span className="text-amber-400">None</span> <span className="text-slate-500"># Flagged explicitly as unavailable at decision cutoff</span></div>
-        </div>
-
-        <div className="text-xs text-slate-400 space-y-1">
+      {/* Section 2: Elexon BMRS Ingestion & 7-Day Chunking */}
+      <section className="space-y-3">
+        <h2 className="text-base font-semibold text-white flex items-center gap-2 border-b border-slate-800/80 pb-2">
+          <Database className="w-4 h-4 text-emerald-400" />
+          <span>2. Elexon BMRS API Constraints & Resilience</span>
+        </h2>
+        <div className="bg-[#111827]/90 border border-slate-800 p-4 rounded-lg space-y-3 text-xs leading-relaxed text-slate-300">
           <p>
-            <strong>Hourly to Half-Hourly Alignment:</strong> The Elexon WINDFOR stream publishes forecasts on an hourly cadence (<code className="text-slate-200">:00</code>).
-            Under UK balancing arrangements, each hourly forecast block covers both half-hour settlement periods within that hour (Period 2H - 1 and Period 2H).
-            WindLens aligns these timestamps deterministically without fabricating artificial half-hourly revisions.
+            The platform interfaces with official Elexon Open Insights APIs:
           </p>
+          <ul className="list-disc pl-5 space-y-1.5 text-slate-400">
+            <li>
+              <strong className="text-slate-200">Actual Outturn:</strong> <code className="text-cyan-300">/datasets/FUELHH</code> or stream endpoint, filtered by <code className="text-cyan-300">fuelType == 'WIND'</code>. Records half-hourly outturn generation in MW across settlement periods 1 to 48.
+            </li>
+            <li>
+              <strong className="text-slate-200">Wind Forecasts:</strong> <code className="text-cyan-300">/datasets/WINDFOR</code> or stream endpoint. Contains National Grid ESO rolling wind generation forecasts with target delivery timestamp (<code className="text-cyan-300">startTime</code>), publication timestamp (<code className="text-cyan-300">publishTime</code>), and generation in MW.
+            </li>
+            <li>
+              <strong className="text-slate-200">Strict 7-Day Range Window:</strong> Elexon BMRS enforces an API restriction where date range queries exceeding 7 days return HTTP 400 Bad Request (RFC 9110). Our asynchronous client (<code className="text-cyan-300">elexon_client.py</code>) automatically chunks monthly requests into sequential 5-day windows with exponential backoff retries.
+            </li>
+          </ul>
         </div>
-      </div>
+      </section>
 
-      {/* Deep-Dive Section 2: Mathematical Formulations */}
-      <div className="bg-slate-900/90 border border-slate-800 p-5 rounded-xl space-y-4">
-        <h3 className="text-sm font-bold text-white flex items-center gap-2">
-          <Cpu className="w-4 h-4 text-cyan-400" />
-          <span>Mathematical Formulations & Metrics Specification</span>
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-          <div className="bg-slate-950 p-3.5 rounded-lg border border-slate-800 space-y-1.5">
-            <span className="font-bold text-blue-400 uppercase tracking-wider text-[11px] block">
-              1. Mean Absolute Error (MAE)
-            </span>
-            <div className="font-mono text-slate-200 bg-slate-900 p-2 rounded text-center">
-              MAE = (1 / N) &Sigma; |Forecast_i − Actual_i|
-            </div>
-            <p className="text-slate-400 text-[11px]">
-              Measures average expected deviation in megawatts without cancellation between positive and negative errors.
+      {/* Section 3: Hourly to Half-Hourly Alignment Convention */}
+      <section className="space-y-3">
+        <h2 className="text-base font-semibold text-white flex items-center gap-2 border-b border-slate-800/80 pb-2">
+          <ShieldCheck className="w-4 h-4 text-purple-400" />
+          <span>3. Hourly-to-Half-Hourly Step Block Alignment Convention</span>
+        </h2>
+        <div className="bg-[#111827]/90 border border-slate-800 p-4 rounded-lg space-y-3 text-xs leading-relaxed text-slate-300">
+          <p>
+            An essential domain fact discovered in the Elexon dataset is that National Grid ESO publishes wind forecasts in <code className="text-cyan-300">WINDFOR</code> at an <strong className="text-white">hourly cadence</strong> (target <code className="text-cyan-300">startTime</code> minutes are always <code className="text-cyan-300">:00</code>), whereas GB wholesale market settlement operates on <strong className="text-white">30-minute settlement periods</strong>.
+          </p>
+          <div className="bg-[#0b101d] p-3 rounded border border-slate-800 space-y-2">
+            <div className="font-semibold text-slate-200">GB Market Matching Standard:</div>
+            <p className="text-slate-400">
+              For clock hour H (00:00 to 01:00 UTC), settlement period 1 (00:00 to 00:30) and settlement period 2 (00:30 to 01:00) both represent instantaneous average power in MW over that clock hour. Because power is an instantaneous rate, an hourly average of 10,000 MW applies legitimately as a constant block across both constituent half-hour settlement periods.
             </p>
-          </div>
-
-          <div className="bg-slate-950 p-3.5 rounded-lg border border-slate-800 space-y-1.5">
-            <span className="font-bold text-purple-400 uppercase tracking-wider text-[11px] block">
-              2. Root Mean Squared Error (RMSE)
-            </span>
-            <div className="font-mono text-slate-200 bg-slate-900 p-2 rounded text-center">
-              RMSE = &radic;[ (1 / N) &Sigma; (Forecast_i − Actual_i)&sup2; ]
-            </div>
-            <p className="text-slate-400 text-[11px]">
-              Quadratic penalty on large forecast misses. Higher RMSE relative to MAE indicates intermittent severe forecast spikes.
-            </p>
-          </div>
-
-          <div className="bg-slate-950 p-3.5 rounded-lg border border-slate-800 space-y-1.5">
-            <span className="font-bold text-amber-400 uppercase tracking-wider text-[11px] block">
-              3. Mean Bias Error (MBE)
-            </span>
-            <div className="font-mono text-slate-200 bg-slate-900 p-2 rounded text-center">
-              MBE = (1 / N) &Sigma; (Forecast_i − Actual_i)
-            </div>
-            <p className="text-slate-400 text-[11px]">
-              Positive bias explicitly denotes <strong>over-forecasting</strong> (downside commercial risk). Negative denotes under-forecasting.
-            </p>
-          </div>
-
-          <div className="bg-slate-950 p-3.5 rounded-lg border border-slate-800 space-y-1.5">
-            <span className="font-bold text-emerald-400 uppercase tracking-wider text-[11px] block">
-              4. Weighted Absolute Percentage Error (WAPE)
-            </span>
-            <div className="font-mono text-slate-200 bg-slate-900 p-2 rounded text-center">
-              WAPE = [ &Sigma; |Forecast_i − Actual_i| / &Sigma; Actual_i ] &times; 100%
-            </div>
-            <p className="text-slate-400 text-[11px]">
-              Volume-weighted percentage error. Zero-denominator policy: returns <code className="text-slate-200">None</code> if &Sigma;Actual = 0 to prevent division by zero.
+            <p className="text-amber-300/90 text-[11px]">
+              &bull; Verification rule: We do not manufacture synthetic sub-hourly forecast vintages. The platform transparently maps the prevailing hourly ESO forecast to both settlement periods ($2H-1$ and $2H$) without fabricating intermediate data.
             </p>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Deep-Dive Section 3: Test Suite & Deployment Verification */}
-      <div className="bg-slate-900/90 border border-slate-800 p-5 rounded-xl space-y-3">
-        <h3 className="text-sm font-bold text-white flex items-center gap-2">
-          <Terminal className="w-4 h-4 text-emerald-400" />
-          <span>Automated Testing & Deployment Configuration</span>
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+      {/* Section 4: Anti-Lookahead Cutoff Enforcement */}
+      <section className="space-y-3">
+        <h2 className="text-base font-semibold text-white flex items-center gap-2 border-b border-slate-800/80 pb-2">
+          <Activity className="w-4 h-4 text-amber-400" />
+          <span>4. Anti-Lookahead Decision Cutoff & Historical Reconstruction</span>
+        </h2>
+        <div className="bg-[#111827]/90 border border-slate-800 p-4 rounded-lg space-y-3 text-xs leading-relaxed text-slate-300">
+          <p>
+            In wholesale trading, procurement decisions are committed at market deadlines. Evaluating a forecast that incorporates weather model revisions published <em>after</em> the auction gate produces severe look-ahead bias and invalidates backtesting.
+          </p>
           <div className="space-y-2">
-            <span className="font-semibold text-slate-200 block">Pytest Suite (28 Tests Passing):</span>
-            <ul className="text-slate-400 space-y-1 pl-4 list-disc text-[11px]">
-              <li>MAE, RMSE, Mean Bias, and WAPE accuracy calculation tests</li>
-              <li>Zero actual outturn and zero-denominator policy validation</li>
-              <li>Anti-lookahead cutoff filtering & vintage timestamp selection</li>
-              <li>Empirical quantile rank calculations & histogram binning</li>
-              <li>Procurement residual balance simulation arithmetic</li>
-              <li>FastAPI endpoint validation, status codes, and 422 regex error tests</li>
-              <li>DataService offline cache fallback verification</li>
-            </ul>
-          </div>
-
-          <div className="space-y-2">
-            <span className="font-semibold text-slate-200 block">Deployment Architecture:</span>
-            <ul className="text-slate-400 space-y-1 pl-4 list-disc text-[11px]">
-              <li><strong>Docker Compose:</strong> Single command <code className="text-cyan-300">docker compose up --build</code> spins up backend & frontend.</li>
-              <li><strong>Vercel Ready:</strong> Frontend configured with <code className="text-cyan-300">vercel.json</code> SPA rewrites and environment URL support.</li>
-              <li><strong>Render / Heroku Ready:</strong> Backend containerized with <code className="text-cyan-300">render.yaml</code> and health check at <code className="text-cyan-300">/api/health</code>.</li>
-            </ul>
+            <div className="font-semibold text-slate-200">Selection Algorithm (<code className="text-cyan-300">get_forecast_for_interval()</code>):</div>
+            <ol className="list-decimal pl-5 space-y-1 text-slate-400">
+              <li>Resolve decision cutoff datetime <code className="text-cyan-300">T_cutoff</code> in UTC. Custom timestamps are strictly required to be timezone-aware (e.g. ISO-8601 with &apos;Z&apos; or &apos;+00:00&apos;). Naive timestamps without timezone offsets are rejected with HTTP 400.</li>
+              <li>Filter all historical vintages for target interval <code className="text-cyan-300">T_start</code> where <code className="text-cyan-300">publishTime &le; T_cutoff</code>.</li>
+              <li>Select the latest vintage published prior to the cutoff: <code className="text-cyan-300">max(publishTime)</code>.</li>
+              <li>If no vintage was published before the cutoff, the interval is explicitly marked <code className="text-rose-400">isAvailableByCutoff = false</code>; no post-cutoff forecast is ever substituted.</li>
+            </ol>
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* Section 5: Mathematical Formulations */}
+      <section className="space-y-3">
+        <h2 className="text-base font-semibold text-white flex items-center gap-2 border-b border-slate-800/80 pb-2">
+          <Table className="w-4 h-4 text-blue-400" />
+          <span>5. Mathematical Error Formulations</span>
+        </h2>
+        <div className="bg-[#111827]/90 border border-slate-800 p-4 rounded-lg space-y-4 text-xs text-slate-300">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-[#0b101d] p-3 rounded border border-slate-800 space-y-1.5">
+              <span className="font-semibold text-slate-200">Mean Absolute Error (MAE)</span>
+              <p className="font-mono text-cyan-300 text-[11px]">&frac12;N &Sigma; |F_i - A_i|</p>
+              <p className="text-slate-400 text-[11px]">Primary linear penalty metric. Average magnitude of forecast error in MW.</p>
+            </div>
+
+            <div className="bg-[#0b101d] p-3 rounded border border-slate-800 space-y-1.5">
+              <span className="font-semibold text-slate-200">Root Mean Squared Error (RMSE)</span>
+              <p className="font-mono text-purple-300 text-[11px]">&radic;(&frac12;N &Sigma; (F_i - A_i)&sup2;)</p>
+              <p className="text-slate-400 text-[11px]">Quadratic penalty metric. Highlights large forecast excursions critical for reserve sizing.</p>
+            </div>
+
+            <div className="bg-[#0b101d] p-3 rounded border border-slate-800 space-y-1.5">
+              <span className="font-semibold text-slate-200">Mean Bias Error (Signed)</span>
+              <p className="font-mono text-amber-300 text-[11px]">&frac12;N &Sigma; (F_i - A_i)</p>
+              <p className="text-slate-400 text-[11px]">Signed direction. Positive = over-forecasting (short imbalance risk). Negative = under-forecasting (long risk).</p>
+            </div>
+
+            <div className="bg-[#0b101d] p-3 rounded border border-slate-800 space-y-1.5">
+              <span className="font-semibold text-slate-200">Weighted Absolute % Error (WAPE)</span>
+              <p className="font-mono text-emerald-300 text-[11px]">(&Sigma; |F_i - A_i| / &Sigma; A_i) &times; 100%</p>
+              <p className="text-slate-400 text-[11px]">Volume-weighted error. Used over MAPE to prevent catastrophic zero-division during wind lulls.</p>
+            </div>
+          </div>
+
+          <div className="bg-[#0b101d] p-3.5 rounded border border-slate-800 space-y-2">
+            <span className="font-semibold text-slate-200">Predictive R&sup2; vs Squared Pearson Correlation (r&sup2;)</span>
+            <p className="text-slate-400 leading-relaxed text-[11px]">
+              <strong>Predictive R&sup2; (Skill Benchmark):</strong> Formula <code>1 - &Sigma;(A_i - F_i)&sup2; / &Sigma;(A_i - mean(A))&sup2;</code>. Measures accuracy relative to climatological mean baseline. Directly penalizes the persistent +1,840 MW mean bias.
+            </p>
+            <p className="text-slate-400 leading-relaxed text-[11px]">
+              <strong>Squared Pearson r&sup2; (Linear Co-Movement):</strong> Square of Pearson correlation. Centers both series on their means and measures linear association regardless of additive bias.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 6: Verified Numerical Reconciliation Table */}
+      <section className="space-y-3">
+        <h2 className="text-base font-semibold text-white flex items-center gap-2 border-b border-slate-800/80 pb-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <span>6. Verified Numerical Reconciliation Table (January 2026 Full Dataset)</span>
+        </h2>
+        <div className="bg-[#111827]/90 border border-slate-800 rounded-lg overflow-x-auto text-xs">
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-[#0b101d] text-slate-400 border-b border-slate-800">
+              <tr>
+                <th className="py-2.5 px-3 font-semibold">Decision Cutoff Gate</th>
+                <th className="py-2.5 px-3 font-semibold text-right">Coverage</th>
+                <th className="py-2.5 px-3 font-semibold text-right">MAE (MW)</th>
+                <th className="py-2.5 px-3 font-semibold text-right">RMSE (MW)</th>
+                <th className="py-2.5 px-3 font-semibold text-right">Mean Bias (MW)</th>
+                <th className="py-2.5 px-3 font-semibold text-right">WAPE (%)</th>
+                <th className="py-2.5 px-3 font-semibold text-right">Predictive R&sup2;</th>
+                <th className="py-2.5 px-3 font-semibold text-right">Pearson r&sup2;</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/60 font-mono text-slate-200">
+              <tr className="hover:bg-slate-800/30">
+                <td className="py-2 px-3 font-sans font-medium text-blue-400">DA_AUCTION_1100 (11:00 D-1)</td>
+                <td className="py-2 px-3 text-right">100.0% (1,488 SP)</td>
+                <td className="py-2 px-3 text-right">2,126.1</td>
+                <td className="py-2 px-3 text-right">2,620.8</td>
+                <td className="py-2 px-3 text-right text-amber-400">+1,840.3</td>
+                <td className="py-2 px-3 text-right">18.36%</td>
+                <td className="py-2 px-3 text-right text-slate-100">0.6021</td>
+                <td className="py-2 px-3 text-right text-slate-300">0.8602</td>
+              </tr>
+              <tr className="hover:bg-slate-800/30">
+                <td className="py-2 px-3 font-sans font-medium text-slate-300">DA_AUCTION_1200 (12:00 D-1)</td>
+                <td className="py-2 px-3 text-right">100.0% (1,488 SP)</td>
+                <td className="py-2 px-3 text-right">2,020.6</td>
+                <td className="py-2 px-3 text-right">2,481.4</td>
+                <td className="py-2 px-3 text-right text-amber-400">+1,806.2</td>
+                <td className="py-2 px-3 text-right">17.45%</td>
+                <td className="py-2 px-3 text-right text-slate-100">0.6433</td>
+                <td className="py-2 px-3 text-right text-slate-300">0.8929</td>
+              </tr>
+              <tr className="hover:bg-slate-800/30">
+                <td className="py-2 px-3 font-sans font-medium text-slate-300">INTRADAY_2000 (20:00 D-1)</td>
+                <td className="py-2 px-3 text-right">100.0% (1,488 SP)</td>
+                <td className="py-2 px-3 text-right">1,981.6</td>
+                <td className="py-2 px-3 text-right">2,448.5</td>
+                <td className="py-2 px-3 text-right text-amber-400">+1,795.7</td>
+                <td className="py-2 px-3 text-right">17.11%</td>
+                <td className="py-2 px-3 text-right text-slate-100">0.6527</td>
+                <td className="py-2 px-3 text-right text-slate-300">0.9034</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* Section 7: Key Trading Insight */}
+      <section className="bg-[#0b101d] border border-blue-900/50 p-4 rounded-lg space-y-2 text-xs">
+        <div className="font-semibold text-blue-300 flex items-center gap-1.5">
+          <Activity className="w-4 h-4" />
+          <span>Core Domain Takeaway for Wholesale Power Procurement</span>
+        </div>
+        <p className="text-slate-300 leading-relaxed">
+          National Grid ESO's Day-Ahead wind forecast exhibits strong directional correlation (<span className="font-mono text-white">r&sup2; = 0.8602</span>), but suffers from systematic over-forecasting (<span className="font-mono text-amber-300">+1,840.3 MW</span> mean bias), reducing true predictive skill to <span className="font-mono text-white">R&sup2; = 0.6021</span>.
+          Without empirical bias-correction, buying strictly to raw Day-Ahead forecast wind volumes will systematically leave the utility short in the Balancing Mechanism by an average of 1,840 MW per settlement period.
+        </p>
+      </section>
     </div>
   );
 };

@@ -91,3 +91,45 @@ def test_procurement_scenario_invalid_demand(client: TestClient):
     }
     resp = client.post("/api/procurement/scenario", json=payload)
     assert resp.status_code == 422
+
+
+def test_invalid_cutoff_returns_400(client: TestClient):
+    """Ensure invalid custom cutoff returns 400 Bad Request, not 500 or fallback."""
+    resp = client.get("/api/forecast?delivery_date=2026-01-15&cutoff_rule=gibberish-string")
+    assert resp.status_code == 400
+    assert "Invalid cutoff parameter" in resp.json()["detail"]
+
+
+def test_naive_cutoff_returns_400(client: TestClient):
+    """Ensure naive cutoff timestamp without timezone returns 400 Bad Request."""
+    resp = client.get("/api/forecast?delivery_date=2026-01-15&cutoff_rule=2026-01-14T11:00:00")
+    assert resp.status_code == 400
+    assert "explicit timezone" in resp.json()["detail"]
+
+
+def test_accuracy_endpoint_includes_squared_pearson_and_predictive_r2(client: TestClient):
+    """Verify accuracy hub returns both squaredPearsonR2 and predictiveR2."""
+    resp = client.get("/api/accuracy?cutoff_rule=DA_AUCTION_1100")
+    assert resp.status_code == 200
+    metrics = resp.json()["overallMetrics"]
+    assert "squaredPearsonR2" in metrics
+    assert "predictiveR2" in metrics
+    assert metrics["squaredPearsonR2"] is not None
+    assert metrics["predictiveR2"] is not None
+    assert metrics["squaredPearsonR2"] > metrics["predictiveR2"]  # Due to positive mean bias
+
+
+def test_evolution_endpoint_with_cutoff_classification(client: TestClient):
+    """Verify forecast evolution endpoint returns cutoff metadata and vintage categories."""
+    resp = client.get("/api/forecast-evolution?delivery_date=2026-01-15&cutoff_rule=DA_AUCTION_1100&periods=16")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["cutoffRule"] == "DA_AUCTION_1100"
+    assert data["cutoffTime"] is not None
+    assert len(data["deliveryPeriodEvolution"]) == 1
+    p16 = data["deliveryPeriodEvolution"][0]
+    assert p16["decisionForecastMW"] is not None
+    for v in p16["vintages"]:
+        assert "isAvailableAtCutoff" in v
+        assert "vintageCategory" in v
+

@@ -24,49 +24,42 @@ export const DateSelector: React.FC<DateSelectorProps> = ({ selectedDate, onDate
   };
 
   const quickDates = [
-    { label: 'Jan 01', date: '2026-01-01', desc: 'New Year' },
-    { label: 'Jan 08', date: '2026-01-08', desc: 'High Wind' },
-    { label: 'Jan 15', date: '2026-01-15', desc: 'Mid Month' },
-    { label: 'Jan 22', date: '2026-01-22', desc: 'Lull Period' },
-    { label: 'Jan 31', date: '2026-01-31', desc: 'Month End' },
+    { label: 'Jan 01', date: '2026-01-01' },
+    { label: 'Jan 08', date: '2026-01-08' },
+    { label: 'Jan 15', date: '2026-01-15' },
+    { label: 'Jan 22', date: '2026-01-22' },
+    { label: 'Jan 31', date: '2026-01-31' },
   ];
 
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-900/90 border border-slate-800 p-3 rounded-xl">
+    <div className="flex flex-wrap items-center justify-between gap-2.5 bg-[#111827]/90 border border-slate-800 p-2.5 rounded-lg text-xs">
+      {/* Date Display */}
       <div className="flex items-center gap-2">
-        <div className="p-2 rounded-lg bg-blue-950/60 border border-blue-800/60 text-blue-400">
-          <Calendar className="w-4 h-4" />
-        </div>
-        <div>
-          <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block">
-            Target Delivery Date
-          </label>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-white tracking-tight">
-              {new Date(selectedDate + 'T00:00:00Z').toLocaleDateString('en-GB', {
-                weekday: 'short',
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-                timeZone: 'UTC'
-              })}
-            </span>
-            <span className="text-xs text-slate-400 font-mono">(Day D)</span>
-          </div>
-        </div>
+        <Calendar className="w-4 h-4 text-slate-400" />
+        <span className="text-slate-400 font-medium">Delivery Date:</span>
+        <span className="font-semibold text-slate-100 text-sm">
+          {new Date(selectedDate + 'T00:00:00Z').toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            timeZone: 'UTC'
+          })}
+        </span>
+        <span className="text-[11px] font-mono text-slate-400">(Day D)</span>
       </div>
 
-      <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+      {/* Quick Jump Buttons & Stepper */}
+      <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
         {/* Quick jump pills */}
-        <div className="hidden lg:flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs">
+        <div className="hidden sm:flex items-center gap-1 bg-slate-900 p-0.5 rounded-md border border-slate-800">
           {quickDates.map((q) => (
             <button
               key={q.date}
               onClick={() => onDateChange(q.date)}
-              className={`px-2 py-1 rounded transition-colors text-[11px] ${
+              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
                 selectedDate === q.date
-                  ? 'bg-blue-600 text-white font-semibold'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               {q.label}
@@ -74,15 +67,15 @@ export const DateSelector: React.FC<DateSelectorProps> = ({ selectedDate, onDate
           ))}
         </div>
 
-        {/* Date Input and Steppers */}
+        {/* Stepper Buttons & Date Picker Input */}
         <div className="flex items-center gap-1">
           <button
             onClick={handlePrev}
             disabled={dayNumber <= 1}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+            className="p-1 rounded-md bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 disabled:opacity-30 disabled:pointer-events-none transition-colors"
             title="Previous Day"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-3.5 h-3.5" />
           </button>
 
           <input
@@ -95,16 +88,16 @@ export const DateSelector: React.FC<DateSelectorProps> = ({ selectedDate, onDate
                 onDateChange(e.target.value);
               }
             }}
-            className="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-slate-200 font-mono focus:outline-none focus:border-blue-500"
+            className="bg-[#0b101d] border border-slate-700/80 rounded-md px-2 py-0.5 text-xs text-slate-200 font-mono focus:outline-none focus:border-blue-500"
           />
 
           <button
             onClick={handleNext}
             disabled={dayNumber >= 31}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+            className="p-1 rounded-md bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 disabled:opacity-30 disabled:pointer-events-none transition-colors"
             title="Next Day"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>

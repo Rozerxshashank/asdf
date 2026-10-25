@@ -113,33 +113,59 @@ class DataService:
         - Delivery occurs across 48 half-hour settlement periods on Day D (00:00 to 24:00 UTC/GMT).
         - EPEX SPOT / Nord Pool UK Day-Ahead Auction gate closes on Day (D - 1).
         - Standard auction deadline is 11:00 UTC (or 12:00 UTC) on Day (D - 1).
+        
+        Strict validation:
+        - Rejects invalid custom ISO strings with ValueError (no silent fallback).
+        - Requires explicit timezone information (naive timestamps rejected).
         """
         deliv_dt = datetime.strptime(delivery_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
         d_minus_one = deliv_dt - timedelta(days=1)
 
-        if cutoff_rule == "DA_AUCTION_1100":
+        rule_clean = (cutoff_rule or "").strip()
+
+        if rule_clean == "DA_AUCTION_1100":
             cutoff_dt = d_minus_one.replace(hour=11, minute=0, second=0, microsecond=0)
             desc = "Day-Ahead Auction Gate (11:00 UTC on D-1)"
-        elif cutoff_rule == "DA_AUCTION_1200":
+            return cutoff_dt, desc
+        elif rule_clean == "DA_AUCTION_1200":
             cutoff_dt = d_minus_one.replace(hour=12, minute=0, second=0, microsecond=0)
             desc = "Day-Ahead Auction Late Gate (12:00 UTC on D-1)"
-        elif cutoff_rule == "INTRADAY_2000":
+            return cutoff_dt, desc
+        elif rule_clean == "INTRADAY_2000":
             cutoff_dt = d_minus_one.replace(hour=20, minute=0, second=0, microsecond=0)
             desc = "Evening Intraday Update (20:00 UTC on D-1)"
-        elif cutoff_rule == "INTRADAY_0000":
+            return cutoff_dt, desc
+        elif rule_clean == "INTRADAY_0000":
             cutoff_dt = deliv_dt.replace(hour=0, minute=0, second=0, microsecond=0)
             desc = "Midnight Day-of-Delivery Gate (00:00 UTC on D)"
-        else:
-            # Try parsing as ISO timestamp
-            try:
-                cutoff_dt = datetime.fromisoformat(cutoff_rule.replace("Z", "+00:00")).astimezone(timezone.utc)
-                desc = f"Custom Cutoff ({cutoff_dt.strftime('%Y-%m-%d %H:%M UTC')})"
-            except Exception:
-                # Default fallback
-                cutoff_dt = d_minus_one.replace(hour=11, minute=0, second=0, microsecond=0)
-                desc = "Day-Ahead Auction Gate (11:00 UTC on D-1)"
+            return cutoff_dt, desc
+        
+        # Custom cutoff validation: require non-empty string and explicit timezone
+        if not rule_clean:
+            raise ValueError("Cutoff rule cannot be empty.")
 
-        return cutoff_dt, desc
+        # Check for explicit timezone indicator ('Z', '+', or '-' after position 10)
+        has_tz = rule_clean.endswith("Z") or "+" in rule_clean or (len(rule_clean) > 10 and "-" in rule_clean[10:])
+        if not has_tz:
+            raise ValueError(
+                f"Custom cutoff '{cutoff_rule}' must include explicit timezone information (e.g., 'Z' or '+00:00'). "
+                "Naive timestamps without timezone offsets are rejected to preserve strict auditability."
+            )
+
+        try:
+            parsed = datetime.fromisoformat(rule_clean.replace("Z", "+00:00"))
+            if parsed.tzinfo is None:
+                raise ValueError("Parsed timestamp is naive.")
+            cutoff_dt = parsed.astimezone(timezone.utc)
+            desc = f"Custom Cutoff ({cutoff_dt.strftime('%Y-%m-%d %H:%M UTC')})"
+            return cutoff_dt, desc
+        except Exception as e:
+            if isinstance(e, ValueError) and "Custom cutoff" in str(e):
+                raise
+            raise ValueError(
+                f"Invalid custom cutoff timestamp '{cutoff_rule}'. Expected a valid ISO-8601 string "
+                f"with explicit timezone (e.g., '2026-01-14T11:00:00Z'): {str(e)}"
+            )
 
     def get_forecast_for_interval(
         self,
@@ -251,9 +277,15 @@ class DataService:
     def get_forecast_evolution_for_date(
         self,
         delivery_date: str,
-        settlement_periods: Optional[List[int]] = None
+        settlement_periods: Optional[List[int]] = None,
+        cutoff_dt: Optional[datetime] = None
     ) -> List[Dict[str, Any]]:
-        """Retrieve historical vintage progression for selected settlement periods on a delivery date."""
+        """Retrieve historical vintage progression for selected settlement periods on a delivery date.
+        
+        Explicitly distinguishes between:
+        1. Pre-cutoff vintages available at original decision time (publishTime <= cutoff_dt).
+        2. Post-cutoff revisions published after decision cutoff (retrospective updates).
+        """
         if settlement_periods is None:
             # Default to peak evening and afternoon periods: 16 (07:30), 24 (11:30), 36 (17:30), 44 (21:30)
             settlement_periods = [16, 24, 36, 44]
@@ -273,23 +305,46 @@ class DataService:
             if not vintages_raw:
                 hour_st = st_dt.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M:%SZ")
                 vintages_raw = self._forecasts_by_start.get(hour_st, [])
+            
             vintages_clean = []
+            decision_fc = None
+            decision_pub = None
+            post_cutoff_count = 0
+
             for v in vintages_raw:
                 pub_iso = self._standardize_iso(v.get("publishTime"))
                 pub_dt = self._parse_iso_to_utc(pub_iso)
                 gen = float(v.get("generation")) if v.get("generation") is not None else None
                 if pub_dt and gen is not None:
                     lead_hours = round((st_dt - pub_dt).total_seconds() / 3600.0, 1)
+                    
+                    is_pre_cutoff = True
+                    if cutoff_dt is not None:
+                        is_pre_cutoff = (pub_dt <= cutoff_dt)
+                    
+                    category = "PRE_CUTOFF_DECISION" if is_pre_cutoff else "POST_CUTOFF_REVISION"
+                    if not is_pre_cutoff:
+                        post_cutoff_count += 1
+                    elif cutoff_dt is not None:
+                        # Candidate for decision forecast (latest before cutoff)
+                        decision_fc = gen
+                        decision_pub = pub_iso
+
                     vintages_clean.append({
                         "publishTime": pub_iso,
                         "leadTimeHours": lead_hours,
-                        "generation": gen
+                        "generation": gen,
+                        "isAvailableAtCutoff": is_pre_cutoff,
+                        "vintageCategory": category
                     })
 
             result.append({
                 "settlementPeriod": p,
                 "startTime": st_iso,
                 "actualMW": act_gen,
+                "decisionForecastMW": decision_fc,
+                "decisionPublishTime": decision_pub,
+                "postCutoffRevisionCount": post_cutoff_count,
                 "vintages": vintages_clean
             })
 

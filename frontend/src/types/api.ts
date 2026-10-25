@@ -111,6 +111,8 @@ export interface OverallMetrics {
   rmseMW: number;
   meanBiasMW: number;
   wapePercent: number | null;
+  squaredPearsonR2: number | null;
+  predictiveR2: number | null;
   correlationR2: number | null;
   p10ErrorMW: number;
   p50ErrorMW: number;
@@ -149,17 +151,25 @@ export interface VintageRecord {
   publishTime: string;
   leadTimeHours: number;
   generation: number;
+  isAvailableAtCutoff: boolean;
+  vintageCategory: 'PRE_CUTOFF_DECISION' | 'POST_CUTOFF_REVISION';
 }
 
 export interface DeliveryPeriodEvolution {
   settlementPeriod: number;
   startTime: string;
   actualMW: number | null;
+  decisionForecastMW?: number | null;
+  decisionPublishTime?: string | null;
+  postCutoffRevisionCount?: number;
   vintages: VintageRecord[];
 }
 
 export interface ForecastEvolutionResponse {
   deliveryDate: string;
+  cutoffRule?: string;
+  cutoffTime?: string;
+  cutoffDescription?: string;
   totalVintagesFound: number;
   deliveryPeriodEvolution: DeliveryPeriodEvolution[];
   evolutionNotice: string;
