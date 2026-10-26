@@ -12,20 +12,44 @@ from app.services import analytics_engine
 router = APIRouter(prefix="/api", tags=["Quantified Accuracy Hub"])
 
 
+VALID_MONTHLY_RULES = {
+    "DA_AUCTION_1100",
+    "DA_AUCTION_1200",
+    "INTRADAY_2000",
+    "INTRADAY_0000"
+}
+
+
 @router.get("/accuracy", response_model=AccuracyHubResponse)
 async def get_accuracy_hub(
     cutoff_rule: str = Query(
         "DA_AUCTION_1100",
-        description="Cutoff rule preset (DA_AUCTION_1100, DA_AUCTION_1200, INTRADAY_2000, INTRADAY_0000) or custom ISO timestamp"
+        description="Date-relative cutoff preset: DA_AUCTION_1100, DA_AUCTION_1200, INTRADAY_2000, INTRADAY_0000"
     )
 ):
     """Calculate comprehensive forecast accuracy metrics across the full January 2026 dataset."""
+
+    rule_clean = (cutoff_rule or "").strip()
+    if rule_clean not in VALID_MONTHLY_RULES:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Invalid cutoff_rule '{cutoff_rule}' for monthly accuracy aggregation. "
+                f"Custom absolute timestamps (e.g., fixed ISO dates) cannot be applied across multiple delivery dates "
+                f"because applying a single timestamp to all 31 days in January 2026 introduces severe look-ahead bias "
+                f"for earlier days and stale forecasts for later days. "
+                f"Monthly aggregation requires a valid date-relative cutoff preset: {', '.join(sorted(VALID_MONTHLY_RULES))}."
+            )
+        )
+
     try:
-        _, cutoff_desc = data_service.resolve_decision_cutoff("2026-01-15", cutoff_rule)
+        _, cutoff_desc = data_service.resolve_decision_cutoff("2026-01-15", rule_clean)
+        all_records = data_service.get_all_matched_records(cutoff_rule=rule_clean)
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid cutoff parameter: {str(e)}")
 
-    all_records = data_service.get_all_matched_records(cutoff_rule=cutoff_rule)
     total_expected = 31 * 48  # 1488 intervals in January
 
     forecasts = []

@@ -77,3 +77,41 @@ describe('KPISummaryCards Component', () => {
     expect(screen.getByText('9.09% WAPE')).toBeInTheDocument();
   });
 });
+
+import { MetricCards } from '../components/accuracy/MetricCards';
+import { OverallMetrics } from '../types/api';
+
+describe('MetricCards Component', () => {
+  it('renders predictive R² and squared Pearson r² with statistical distinction', () => {
+    const mockMetrics: OverallMetrics = {
+      sampleSize: 1488,
+      matchedRecords: 1488,
+      missingRecords: 0,
+      coveragePercent: 100.0,
+      maeMW: 2126.1,
+      rmseMW: 2620.8,
+      meanBiasMW: 1840.3,
+      wapePercent: 18.36,
+      squaredPearsonR2: 0.860,
+      predictiveR2: 0.602,
+      correlationR2: 0.860,
+      p10ErrorMW: -720.0,
+      p50ErrorMW: 1680.0,
+      p90ErrorMW: 4850.0
+    };
+
+    render(<MetricCards metrics={mockMetrics} />);
+
+    expect(screen.getByText('2,126.1')).toBeInTheDocument();
+    expect(screen.getByText('2,620.8')).toBeInTheDocument();
+    expect(screen.getByText('+1,840.3')).toBeInTheDocument();
+    expect(screen.getByText('18.36%')).toBeInTheDocument();
+    expect(screen.getByText('0.602')).toBeInTheDocument();
+    expect(screen.getByText('0.860')).toBeInTheDocument();
+
+    // Check help explanation toggle
+    const helpBtn = screen.getByTitle('Click to explain difference between Predictive R² and Pearson r²');
+    fireEvent.click(helpBtn);
+    expect(screen.getByText(/Statistical Metric Distinction: Predictive R/i)).toBeInTheDocument();
+  });
+});

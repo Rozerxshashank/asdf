@@ -262,14 +262,37 @@ class DataService:
 
         return intervals
 
+    VALID_MONTHLY_RULES = {
+        "DA_AUCTION_1100",
+        "DA_AUCTION_1200",
+        "INTRADAY_2000",
+        "INTRADAY_0000"
+    }
+
     def get_all_matched_records(self, cutoff_rule: str = "DA_AUCTION_1100") -> List[Dict[str, Any]]:
-        """Retrieve all matched actual-forecast records across the entire January 2026 dataset."""
+        """Retrieve all matched actual-forecast records across the entire January 2026 dataset.
+        
+        Strict constraint:
+        Monthly aggregation across January 2026 requires a date-relative cutoff preset
+        (DA_AUCTION_1100, DA_AUCTION_1200, INTRADAY_2000, INTRADAY_0000) so that each delivery date
+        is evaluated against its corresponding D-1 or intraday gate. Custom absolute ISO timestamps
+        are rejected because applying a single fixed timestamp across all 31 delivery dates introduces
+        severe look-ahead bias for earlier dates and stale forecasts for later dates.
+        """
+        rule_clean = (cutoff_rule or "").strip()
+        if rule_clean not in self.VALID_MONTHLY_RULES:
+            raise ValueError(
+                f"Invalid cutoff rule '{cutoff_rule}' for monthly aggregation across January 2026. "
+                f"Custom absolute ISO timestamps cannot be uniformly applied across multiple delivery dates. "
+                f"Must specify a valid date-relative cutoff preset: {', '.join(sorted(self.VALID_MONTHLY_RULES))}."
+            )
+
         all_records = []
         # January 2026: 2026-01-01 to 2026-01-31
         start_date = datetime(2026, 1, 1, tzinfo=timezone.utc)
         for d in range(31):
             curr_date = (start_date + timedelta(days=d)).strftime("%Y-%m-%d")
-            cutoff_dt, _ = self.resolve_decision_cutoff(curr_date, cutoff_rule)
+            cutoff_dt, _ = self.resolve_decision_cutoff(curr_date, rule_clean)
             day_intervals = self.get_day_intervals(curr_date, cutoff_dt)
             all_records.extend(day_intervals)
         return all_records

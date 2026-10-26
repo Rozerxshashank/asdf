@@ -43,3 +43,13 @@ def test_cache_fallback_behavior(tmp_path):
     assert loaded is False
     assert empty_ds.is_loaded is False
     assert empty_ds.get_actuals_count() == 0
+
+
+def test_get_all_matched_records_rejects_custom_timestamp():
+    """Verify that get_all_matched_records rejects custom absolute ISO timestamps."""
+    import pytest
+    with pytest.raises(ValueError) as excinfo:
+        data_service.get_all_matched_records("2026-01-14T11:00:00Z")
+    assert "Invalid cutoff rule" in str(excinfo.value)
+    assert "Custom absolute ISO timestamps cannot be uniformly applied" in str(excinfo.value)
+

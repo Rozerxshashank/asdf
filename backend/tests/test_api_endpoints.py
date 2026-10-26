@@ -133,3 +133,25 @@ def test_evolution_endpoint_with_cutoff_classification(client: TestClient):
         assert "isAvailableAtCutoff" in v
         assert "vintageCategory" in v
 
+
+def test_accuracy_endpoint_rejects_custom_absolute_timestamp(client: TestClient):
+    """Ensure monthly accuracy endpoint rejects custom absolute timestamps with 400."""
+    resp = client.get("/api/accuracy?cutoff_rule=2026-01-14T11:00:00Z")
+    assert resp.status_code == 400
+    detail = resp.json()["detail"]
+    assert "Custom absolute timestamps" in detail
+    assert "DA_AUCTION_1100" in detail
+
+
+def test_accuracy_endpoint_all_valid_presets(client: TestClient):
+    """Ensure accuracy endpoint succeeds across all four standard date-relative presets."""
+    for preset in ["DA_AUCTION_1100", "DA_AUCTION_1200", "INTRADAY_2000", "INTRADAY_0000"]:
+        resp = client.get(f"/api/accuracy?cutoff_rule={preset}")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["cutoffRule"] == preset
+        assert data["overallMetrics"]["matchedRecords"] == 1488
+        assert data["overallMetrics"]["predictiveR2"] is not None
+        assert data["overallMetrics"]["squaredPearsonR2"] is not None
+
+

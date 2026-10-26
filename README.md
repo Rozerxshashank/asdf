@@ -39,6 +39,7 @@ All metrics below were independently recalculated directly from the packaged raw
 | **`DA_AUCTION_1100` (11:00 UTC D-1)** | 1,488 / 1,488 | 100.0% | 8,616,068.5 MWh | 9,985,249.0 MWh | **2,126.12 MW** | **2,620.80 MW** | **+1,840.30 MW** | **18.36%** | **0.6021** | **0.8602** |
 | **`DA_AUCTION_1200` (12:00 UTC D-1)** | 1,488 / 1,488 | 100.0% | 8,616,068.5 MWh | 9,959,906.0 MWh | **2,020.64 MW** | **2,481.38 MW** | **+1,806.23 MW** | **17.45%** | **0.6433** | **0.8929** |
 | **`INTRADAY_2000` (20:00 UTC D-1)** | 1,488 / 1,488 | 100.0% | 8,616,068.5 MWh | 9,952,082.0 MWh | **1,981.57 MW** | **2,448.48 MW** | **+1,795.72 MW** | **17.11%** | **0.6527** | **0.9034** |
+| **`INTRADAY_0000` (00:00 UTC Day D)** | 1,488 / 1,488 | 100.0% | 8,616,068.5 MWh | 9,891,075.0 MWh | **1,940.82 MW** | **2,410.57 MW** | **+1,713.72 MW** | **16.76%** | **0.6634** | **0.8967** |
 
 ### Statistical Discrepancy Analysis: Predictive $R^2$ vs Squared Pearson $r^2$
 * **Squared Pearson Correlation ($r^2 = 0.8602$):** Measures the linear co-movement and directional shape alignment between forecast and actual generation. Because Pearson correlation de-means both series, it completely ignores constant additive scale shifts.
@@ -49,15 +50,21 @@ All metrics below were independently recalculated directly from the packaged raw
 
 ## 3. Data & Alignment Conventions
 
-### Hourly-to-Half-Hourly Step Block Alignment
-* **Cadence Asymmetry:** National Grid ESO publishes wind generation forecasts in the Elexon `WINDFOR` stream at **hourly cadence** (target `startTime` minutes are always `:00`). Conversely, GB wholesale market settlement operates on **30-minute settlement periods** (`FUELHH`).
-* **GB Market Convention:** For any clock hour $H$, settlement periods $2H-1$ (HH:00 to HH:30) and $2H$ (HH:30 to HH+1:00) represent instantaneous average power in MW delivered over that hour. Under GB market conventions, the prevailing hourly forecast MW applies as a constant step block across both half-hour intervals without fabricating intermediate synthetic vintages.
-* **100% Coverage Note:** 1,488 matched settlement periods reflects complete hourly step block alignment, not sub-hourly weather model resolution.
+### Hourly-to-Half-Hourly Step Block Alignment Audit
+* **Authoritative Schema Inspection:** Detailed audit of the packaged 19,856 Elexon `WINDFOR` records and 1,488 `FUELHH` actuals confirms:
+  * All `WINDFOR` forecast target `startTime` records possess minute `:00` (e.g. `2026-01-15T12:00:00Z`). Elexon publishes zero `:30` forecasts in `WINDFOR`, and `settlementPeriod` is omitted from the forecast schema.
+  * `FUELHH` actual generation is reported for both `:00` and `:30` target start times with explicit `settlementPeriod` (1 to 48) and `settlementDate`.
+* **GB Settlement Semantics (BSC Section Q & T):** Under GB Balancing and Settlement Code rules, generation in MW denotes an instantaneous average rate of energy delivery (MW = MWh/h). An hourly ESO forecast for clock hour $H$ legitimately defines the constant expected power delivery rate across both constituent half-hour settlement periods:
+  $$\text{Forecast}(\text{Period } 2H-1) = \text{Forecast}(\text{Period } 2H) = \text{Forecast Hourly Average}(H\text{:00})$$
+* **Non-Fabrication Policy:** The system enforces this step-block mapping without synthesizing fake intermediate 30-minute weather runs. The 100% coverage (1,488 / 1,488 periods) represents complete step-block coverage across all January 2026 delivery hours.
 
-### Anti-Lookahead Cutoff Enforcement
-* Forecasts are strictly filtered such that `publishTime <= cutoff_dt`.
-* Custom cutoff timestamps require explicit timezone information (e.g. `2026-01-14T11:00:00Z`). Naive timestamps without timezone offsets are rejected with HTTP 400 (no silent fallback).
-* The Forecast Evolution view explicitly distinguishes pre-cutoff decision forecasts (available at auction gate) from retrospective model revisions published after the auction.
+### Anti-Lookahead Cutoff Enforcement & Forward vs Retrospective Records
+* **Empirical Vintage Breakdown:** Of the 19,856 WINDFOR records, 15,775 are forward forecasts (`publishTime <= startTime`), while 4,081 are retrospective reruns published after target delivery (`publishTime > startTime`).
+* **Strict Filter:** To prevent look-ahead bias, the selection engine strictly enforces `publishTime <= cutoff_dt`. Without this filter, retrospective post-event runs would contaminate Day-Ahead decisions.
+* **Monthly Cutoff Aggregation Policy:**
+  * For single-day operational views (`/api/forecast` and `/api/forecast-evolution`), custom timezone-aware ISO timestamps are supported (e.g., `2026-01-14T11:00:00Z`). Naive timestamps without explicit timezone offsets are rejected with HTTP 400.
+  * For monthly accuracy evaluation (`/api/accuracy`), cutoffs must be date-relative presets (`DA_AUCTION_1100`, `DA_AUCTION_1200`, `INTRADAY_2000`, `INTRADAY_0000`). Custom absolute ISO timestamps are explicitly rejected with HTTP 400, because applying a single fixed timestamp across all 31 days in January 2026 introduces massive look-ahead bias for earlier days (e.g. up to 13 days of future data) and stale forecasts for later days.
+* **Forecast Evolution Visualization:** Pre-cutoff decision forecasts (available at the auction gate) are visually rendered as solid lines, strictly differentiated from subsequent retrospective model revisions (dashed lines).
 
 ---
 
@@ -98,7 +105,7 @@ sweChallenge/
 │   │       ├── january_2026_actuals.json   # 1,488 verified actual outturn intervals (FUELHH)
 │   │       └── january_2026_forecasts.json # 19,856 verified forecast vintages (WINDFOR)
 │   │
-│   └── tests/                     # Backend automated test suite (38 tests)
+│   └── tests/                     # Backend automated test suite (41 tests)
 │       ├── conftest.py            # Pytest fixtures and FastAPI TestClient
 │       ├── test_analytics_engine.py   # Tests for MAE, RMSE, MBE, WAPE, Predictive R2 vs r2
 │       ├── test_forecast_selection.py # Tests for anti-lookahead, hourly alignment, cutoff errors
@@ -133,7 +140,7 @@ sweChallenge/
         │   ├── simulator/         # ScenarioControls, ResidualChart, DisclaimerBox
         │   └── tech-guide/        # ArchitectureReview (technical review whitepaper)
         │
-        └── tests/                 # Frontend component tests (4 tests)
+        └── tests/                 # Frontend component tests (5 tests)
             ├── setup.ts           # Vitest DOM matchers and ResizeObserver mock
             └── components.test.tsx# Tests for DateSelector, CutoffSelector, and KPI cards
 ```
@@ -193,18 +200,18 @@ docker compose down
 
 ### Method C: Running the Automated Tests
 
-#### Backend Pytest Suite (38 tests)
+#### Backend Pytest Suite (41 tests)
 ```bash
 PYTHONPATH=backend backend/.venv/bin/pytest backend/tests/ -v
 ```
-*Verifies mathematical formulations (MAE, RMSE, MBE, WAPE zero-denominator policy, predictive $R^2$ vs Pearson $r^2$), anti-lookahead vintage selection, hourly block matching, timezone-aware cutoff parsing, and API error handling.*
+*Verifies mathematical formulations (MAE, RMSE, MBE, WAPE zero-denominator policy, predictive $R^2$ vs Pearson $r^2$), anti-lookahead vintage selection, hourly block matching, timezone-aware cutoff parsing, monthly date-relative rule validation, and API error handling.*
 
-#### Frontend Vitest Suite (4 tests)
+#### Frontend Vitest Suite (5 tests)
 ```bash
 cd frontend
 npm test
 ```
-*Verifies component rendering, user interactions, stepper guards, and numerical formatting.*
+*Verifies component rendering, user interactions, stepper guards, dual $R^2$ displays, and numerical formatting.*
 
 #### Frontend Production Build
 ```bash

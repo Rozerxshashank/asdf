@@ -105,9 +105,13 @@ export const App: React.FC = () => {
   // Lazy-load Accuracy data when tab is opened or cutoff changes
   useEffect(() => {
     let ignore = false;
-    if (activeTab === 'accuracy' && (!accuracyData || accuracyData.cutoffRule !== cutoffRule)) {
+    // Monthly aggregation requires date-relative presets (DA_AUCTION_1100, DA_AUCTION_1200, INTRADAY_2000, INTRADAY_0000)
+    const validMonthlyRules = ['DA_AUCTION_1100', 'DA_AUCTION_1200', 'INTRADAY_2000', 'INTRADAY_0000'];
+    const accuracyCutoffRule = validMonthlyRules.includes(cutoffRule) ? cutoffRule : 'DA_AUCTION_1100';
+
+    if (activeTab === 'accuracy' && (!accuracyData || accuracyData.cutoffRule !== accuracyCutoffRule)) {
       setLoading(true);
-      fetchAccuracy(cutoffRule)
+      fetchAccuracy(accuracyCutoffRule)
         .then((data) => {
           if (!ignore) {
             setAccuracyData(data);

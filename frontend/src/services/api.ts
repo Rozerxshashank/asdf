@@ -8,7 +8,8 @@ import {
   ProcurementScenarioResponse
 } from '../types/api';
 
-const BASE_URL = import.meta.env.VITE_API_URL || '';
+const RAW_BASE_URL = import.meta.env.VITE_API_URL || '';
+const BASE_URL = RAW_BASE_URL.replace(/\/+$/, '');
 
 class ApiError extends Error {
   status: number;
